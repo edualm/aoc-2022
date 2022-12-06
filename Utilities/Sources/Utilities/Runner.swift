@@ -9,6 +9,16 @@ import Foundation
 
 public struct Runner {
     
+    typealias TimeStartEnd = (start: DispatchTime, end: DispatchTime?)
+    
+    private func calculateMs(from timeStartEnd: TimeStartEnd) -> Double? {
+        guard let end = timeStartEnd.end else {
+            return nil
+        }
+        
+        return Double(end.uptimeNanoseconds - timeStartEnd.start.uptimeNanoseconds) / 1_000_000
+    }
+    
     let challengeType: RunnableChallenge.Type
     
     public init(challengeType: RunnableChallenge.Type) {
@@ -35,12 +45,28 @@ public struct Runner {
             
             print("\(Banner.with(day: challenge.day))\n")
             
+            var firstPartTime: TimeStartEnd = (DispatchTime.now(), nil)
+            
             if let answer = challenge.part1() {
-                print("Part 1 answer: \(answer)")
+                firstPartTime.end = DispatchTime.now()
+                
+                if let time = calculateMs(from: firstPartTime) {
+                    print("Part 1 answer: \(answer) (took \(time) ms)")
+                } else {
+                    print("Part 1 answer: \(answer) (unable to calculate time)")
+                }
             }
             
+            var secondPartTime: TimeStartEnd = (DispatchTime.now(), nil)
+            
             if let answer = challenge.part2() {
-                print("Part 2 answer: \(answer)")
+                secondPartTime.end = DispatchTime.now()
+                
+                if let time = calculateMs(from: secondPartTime) {
+                    print("Part 2 answer: \(answer) (took \(time) ms)")
+                } else {
+                    print("Part 2 answer: \(answer) (unable to calculate time)")
+                }
             }
         } catch {
             print("❌ Execution Error: \(error)")
