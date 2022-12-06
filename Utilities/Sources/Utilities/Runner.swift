@@ -11,12 +11,12 @@ public struct Runner {
     
     typealias TimeStartEnd = (start: DispatchTime, end: DispatchTime?)
     
-    private func calculateMs(from timeStartEnd: TimeStartEnd) -> Double? {
-        guard let end = timeStartEnd.end else {
+    private func calculateMs(from timeStartEnd: TimeStartEnd, overhead: TimeStartEnd) -> Double? {
+        guard let end = timeStartEnd.end, let overheadEnd = overhead.end else {
             return nil
         }
         
-        return Double(end.uptimeNanoseconds - timeStartEnd.start.uptimeNanoseconds) / 1_000_000
+        return Double(end.uptimeNanoseconds - timeStartEnd.start.uptimeNanoseconds - (overheadEnd.uptimeNanoseconds - overhead.start.uptimeNanoseconds)) / 1_000_000
     }
     
     let challengeType: RunnableChallenge.Type
@@ -41,6 +41,11 @@ public struct Runner {
     
     public func run(inputIsCommaSeparated: Bool = true) {
         do {
+            //  This probably doesn't matter much but... 🤷‍♂️
+            
+            var overhead: TimeStartEnd = (DispatchTime.now(), nil)
+            overhead.end = DispatchTime.now()
+            
             let challenge = challengeType.init(input: try challengeInput(inputIsCommaSeparated: inputIsCommaSeparated))
             
             print("\(Banner.with(day: challenge.day))\n")
@@ -50,7 +55,7 @@ public struct Runner {
             if let answer = challenge.part1() {
                 firstPartTime.end = DispatchTime.now()
                 
-                if let time = calculateMs(from: firstPartTime) {
+                if let time = calculateMs(from: firstPartTime, overhead: overhead) {
                     print("Part 1 answer: \(answer) (took \(time) ms)")
                 } else {
                     print("Part 1 answer: \(answer) (unable to calculate time)")
@@ -62,7 +67,7 @@ public struct Runner {
             if let answer = challenge.part2() {
                 secondPartTime.end = DispatchTime.now()
                 
-                if let time = calculateMs(from: secondPartTime) {
+                if let time = calculateMs(from: secondPartTime, overhead: overhead) {
                     print("Part 2 answer: \(answer) (took \(time) ms)")
                 } else {
                     print("Part 2 answer: \(answer) (unable to calculate time)")
